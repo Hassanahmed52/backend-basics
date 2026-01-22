@@ -126,7 +126,7 @@ const loginUser = asyncHandler( async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === "production"
     }
 
     return res.status(200).
@@ -160,7 +160,7 @@ const logoutUser = asyncHandler( async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         sameSite: "Strict",
         path: "/" 
     }
@@ -175,7 +175,8 @@ const logoutUser = asyncHandler( async (req, res) => {
 
 
 const refreshAccessToken = asyncHandler( async (req, res) => {
-    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+    console.log(req.cookies)
+    const incomingRefreshToken = req.cookies?.RefreshToken || req.body?.RefreshToken
 
     if(!incomingRefreshToken){
         throw new ApiError(401, "unauthorized request")
@@ -190,24 +191,24 @@ const refreshAccessToken = asyncHandler( async (req, res) => {
             throw new ApiError(401, "Invalid refresh token")
         }
     
-        if(incomingRefreshToken !== User?.refreshToken){
+        if(incomingRefreshToken !== user?.refreshToken){
             throw new ApiError(401, "unauthorized request")
         }
     
         const options = {
             httpOnly: true,
-            secure: false
+            secure: process.env.NODE_ENV === "production"
         }
     
-        const {AccessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+        const {AccessToken, RefreshToken} = await generateAccessAndRefreshToken(user._id)
     
         return res
         .status(200)
-        .cookie("accessToken", AccessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
+        .cookie("AccessToken", AccessToken, options)
+        .cookie("RefreshToken", RefreshToken, options)
         .json(
             200,
-            {AccessToken, refreshToken: newRefreshToken},
+            {},
             "Access token refreshed"
         )
     } catch (error) {
